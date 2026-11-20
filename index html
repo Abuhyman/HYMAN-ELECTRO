@@ -1,0 +1,793 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>HYMAN-ELECTRO — Load Assessment</title>
+<style>
+:root{
+  --bg:#eef1f5;--card:#fff;--ink:#0f1b2d;--mut:#56657a;--line:#d5dce6;
+  --r:#d6342c;--y:#e8a900;--b:#1f5fbf;--ok:#177a4b;--warn:#9a5b00;
+  box-sizing:border-box;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;--bg:#0b1320;--card:#121d2f;--ink:#e7edf6;--mut:#97a6bc;
+    --line:#24344d;--r:#ff6b60;--y:#ffc83d;--b:#6aa3ff;--ok:#4fd08e;--warn:#ffc83d;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;--bg:#0b1320;--card:#121d2f;--ink:#e7edf6;--mut:#97a6bc;
+  --line:#24344d;--r:#ff6b60;--y:#ffc83d;--b:#6aa3ff;--ok:#4fd08e;--warn:#ffc83d;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--ink);
+  font:16px/1.5 "Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;
+}
+.wrap{max-width:900px;margin:0 auto;padding:20px 16px 48px}
+header{display:flex;align-items:center;gap:14px;margin-bottom:6px}
+.tri{display:flex;flex-direction:column;gap:4px;width:34px}
+.tri i{height:8px;border-radius:2px}
+.tri i:nth-child(1){background:var(--r)}
+.tri i:nth-child(2){background:var(--y)}
+.tri i:nth-child(3){background:var(--b)}
+h1{font-size:1.9rem;letter-spacing:-.03em;margin:0;font-weight:800;line-height:1}
+.sub{color:var(--mut);margin:0 0 20px}
+h2{font-size:1.1rem;margin:0 0 10px;font-weight:700}
+section{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:16px}
+.g{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}
+label{display:block;font-size:.85rem;color:var(--mut);margin-bottom:3px}
+input,select,button{
+  font:inherit;color:var(--ink);background:var(--bg);
+  border:1px solid var(--line);border-radius:6px;padding:8px 10px;
+  width:100%;min-height:40px;
+}
+button{width:auto;cursor:pointer;font-weight:600}
+button.p{background:var(--b);border-color:var(--b);color:#fff}
+:root:not([data-theme="light"]) button.p{color:#06101f}
+button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{
+  outline:3px solid var(--y);outline-offset:1px;
+}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:end}
+.row>*{flex:1 1 120px}
+.row>button{flex:0 0 auto}
+.note{color:var(--mut);font-size:.88rem}
+.disco{margin-top:10px;padding:10px 12px;border-left:4px solid var(--y);background:var(--bg);border-radius:0 6px 6px 0;font-size:.92rem}
+.hero{display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.badge{font-size:1.5rem;font-weight:800;padding:10px 18px;border-radius:8px;letter-spacing:-.01em}
+.b1{background:var(--ok);color:#fff}
+.b3{background:var(--r);color:#fff}
+:root:not([data-theme="light"]) .b1,
+:root:not([data-theme="light"]) .b3{color:#06101f}
+.stats{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));margin:12px 0}
+.st{border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.st b{display:block;font-size:1.25rem;line-height:1.2}
+.st span{color:var(--mut);font-size:.82rem}
+ul{padding-left:20px;margin:6px 0}
+li{margin:3px 0}
+.warn{color:var(--warn)}
+.bar{display:flex;align-items:center;gap:10px;margin:6px 0}
+.bar em{font-style:normal;width:26px;font-weight:700}
+.bar div{height:22px;border-radius:4px;min-width:4px}
+.bar span{font-variant-numeric:tabular-nums}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.9rem}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+td input{width:70px;min-height:32px;padding:4px 6px}
+td button{padding:2px 8px;min-height:30px}
+details{margin-top:10px}
+summary{cursor:pointer;font-weight:600}
+.cfg{display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-top:10px}
+.codes{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+.code{font:12px/1 ui-monospace,Consolas,monospace;background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:4px 7px}
+@media print{
+  .np{display:none!important}
+  body{background:#fff;color:#000}
+  section{border-color:#999;break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="tri"><i></i><i></i><i></i></div>
+  <div><h1>HYMAN-ELECTRO</h1></div>
+</header>
+<p class="sub">Load assessment, phase recommendation and meter sizing for Nigerian DisCo connections.</p>
+
+<!-- ============ 1. CONNECTION DETAILS ============ -->
+<section class="np">
+  <h2>1. Connection details</h2>
+  <div class="g">
+    <div><label for="disco">DisCo</label><select id="disco"></select></div>
+    <div><label for="prem">Premises type</label>
+      <select id="prem">
+        <option value="R">Residential</option>
+        <option value="C">Commercial</option>
+        <option value="D">Industrial</option>
+        <option value="A">Special (government, church, school)</option>
+      </select>
+    </div>
+    <div><label for="band">Service band</label><select id="band"></select></div>
+    <div><label for="ref">Customer or application ref</label>
+      <input id="ref" placeholder="e.g. ABJ-2026-001928"></div>
+  </div>
+  <div class="disco" id="dinfo"></div>
+</section>
+
+<!-- ============ 2. APPLIANCES ============ -->
+<section class="np">
+  <h2>2. Appliances</h2>
+  <div class="row">
+    <div style="flex:3 1 220px">
+      <label for="psearch">Search presets</label>
+      <input id="psearch" placeholder="e.g. pump, AC, float switch" oninput="fillPre()">
+      <label for="pre" style="margin-top:8px">Preset</label>
+      <select id="pre"></select>
+    </div>
+    <div style="flex:0 1 80px">
+      <label for="pq">Qty</label>
+      <input id="pq" type="number" min="1" value="1">
+    </div>
+    <button class="p" onclick="addPre()">Add appliance</button>
+  </div>
+
+  <details>
+    <summary>Add a custom appliance</summary>
+    <div class="cfg">
+      <div><label for="cn">Name</label><input id="cn"></div>
+      <div><label for="cw">Watts each</label><input id="cw" type="number" min="1"></div>
+      <div><label for="cq">Qty</label><input id="cq" type="number" min="1" value="1"></div>
+      <div><label for="cp">Power factor</label>
+        <input id="cp" type="number" step=".01" min=".3" max="1" value=".9"></div>
+      <div><label for="cc">Category</label><select id="cc"></select></div>
+      <div><label for="ct">Supply</label>
+        <select id="ct">
+          <option value="0">Single-phase</option>
+          <option value="1">Three-phase</option>
+        </select>
+      </div>
+    </div>
+    <p><button onclick="addCustom()">Add custom appliance</button></p>
+  </details>
+
+  <p>
+    <button onclick="demo()">Load example flat</button>
+    <button onclick="S.items=[];go()">Clear list</button>
+  </p>
+
+  <details>
+    <summary>Assumptions you can edit</summary>
+    <p class="note">Defaults follow common DisCo practice. Confirm values with your DisCo's technical team before relying on them.</p>
+    <div class="cfg" id="cfg"></div>
+  </details>
+</section>
+
+<!-- ============ 3. ASSESSMENT ============ -->
+<section id="out"></section>
+
+<!-- ============ 4. AUDIT LOG ============ -->
+<section id="audit" class="np">
+  <h2>4. Audit log</h2>
+  <p class="note">Saved in this browser only. Use "Show API request" to copy a request body that the server accepts.</p>
+  <div id="alist" class="tw"></div>
+  <details id="reqd">
+    <summary>API request body</summary>
+    <textarea id="req" readonly rows="10" style="width:100%;font:12px/1.4 ui-monospace,Consolas,monospace;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:8px"></textarea>
+  </details>
+</section>
+
+<p class="note">
+  Bands A to E and class codes (R, C, D, A with Non-MD, MD1, MD2) follow NERC's MYTO structure.
+  A DisCo's feeder determines your band, so the app records it and does not calculate it.
+  Several states now regulate their own DisCo operations through a State Electricity Regulatory Commission,
+  so confirm which rules apply to your state. Tariff rates are not included because they change;
+  check your DisCo's current tariff order. The 45 kVA MD review threshold follows NERC's MD customer definition.
+</p>
+</div>
+
+<script>
+/* ---------- helpers ---------- */
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const f1 = v => (Math.round(v*10)/10).toLocaleString('en-NG');
+const f2 = v => (Math.round(v*100)/100).toLocaleString('en-NG');
+
+/* ---------- version ---------- */
+const VER = '1.2.0';
+
+/* ---------- DisCo catalogue ---------- */
+const DISCOS = [
+  ['AEDC','Abuja Electricity Distribution','FCT, Kogi, Nasarawa, Niger'],
+  ['BEDC','Benin Electricity Distribution','Edo, Delta, Ondo, Ekiti'],
+  ['EKEDP','Eko Electricity Distribution','Lagos (Island, Lekki, Ajah, Festac, Badagry axis)'],
+  ['EEDC','Enugu Electricity Distribution','Enugu, Abia, Anambra, Ebonyi, Imo'],
+  ['IBEDC','Ibadan Electricity Distribution','Oyo, Ogun, Osun, Kwara and parts of Niger, Kogi, Ekiti'],
+  ['IE','Ikeja Electric','Lagos (Ikeja, Ikorodu, Shomolu, Oshodi axis)'],
+  ['JED','Jos Electricity Distribution','Plateau, Bauchi, Benue, Gombe'],
+  ['KAEDCO','Kaduna Electric','Kaduna, Kebbi, Sokoto, Zamfara'],
+  ['KEDCO','Kano Electricity Distribution','Kano, Katsina, Jigawa'],
+  ['PHED','Port Harcourt Electricity Distribution','Rivers, Bayelsa, Akwa Ibom, Cross River'],
+  ['YEDC','Yola Electricity Distribution','Adamawa, Borno, Taraba, Yobe'],
+];
+
+/* ---------- states that have moved to a SERC ---------- */
+const SERC = {
+  AEDC:'FCT, Kogi, Nasarawa, Niger',
+  BEDC:'Edo, Delta, Ondo, Ekiti',
+  EKEDP:'Lagos',
+  EEDC:'Enugu, Abia, Anambra, Ebonyi, Imo',
+  IBEDC:'Oyo, Ogun, Osun, Kwara',
+  IE:'Lagos',
+  JED:'Plateau, Bauchi, Benue, Gombe',
+  KAEDCO:'Kaduna, Kebbi, Sokoto, Zamfara',
+  KEDCO:'Kano, Katsina, Jigawa',
+  PHED:'Rivers, Bayelsa, Akwa Ibom, Cross River',
+  YEDC:'Adamawa, Borno, Taraba, Yobe',
+};
+
+const BANDS = {
+  A:'minimum 20 h/day',
+  B:'minimum 16 h/day',
+  C:'minimum 12 h/day',
+  D:'minimum 8 h/day',
+  E:'minimum 4 h/day',
+};
+
+const CODES = {
+  R:['R2','R3','R4'],
+  C:['C1','C2','C3'],
+  D:['D1','D2','D3'],
+  A:['A1','A2','A3'],
+};
+
+/* ---------- diversity categories ---------- */
+const CAT = {
+  lighting:['Lighting and fans',.75],
+  sockets:['Socket outlets',.5],
+  airConditioner:['Air conditioning',.9],
+  refrigeration:['Refrigeration',1],
+  waterHeating:['Water heating',.85],
+  cooking:['Cooking and ironing',.7],
+  pumping:['Pumping',.9],
+  entertainment:['Entertainment',.8],
+  office:['Office equipment',.7],
+  motor:['Motors and industrial',.9],
+  hvac:['HVAC: chillers, VRF, air handling, ventilation',.9],
+  controls:['Controls, float switches, dedicated lighting',1],
+  other:['Other',.7],
+};
+
+/* ---------- appliance presets ---------- */
+const PRE = [
+  ['LED bulb','lighting',10,.95,0],
+  ['Ceiling fan','lighting',75,.85,0],
+  ['Standing fan','lighting',60,.85,0],
+  ['1 HP split AC','airConditioner',950,.85,0],
+  ['1.5 HP split AC','airConditioner',1300,.85,0],
+  ['2 HP split AC','airConditioner',1750,.85,0],
+  ['Refrigerator (medium)','refrigeration',200,.8,0],
+  ['Deep freezer','refrigeration',300,.8,0],
+  ['Microwave','cooking',1200,.98,0],
+  ['Electric kettle','cooking',1500,1,0],
+  ['Pressing iron','cooking',1000,1,0],
+  ['Water heater (storage)','waterHeating',2000,1,0],
+  ['Washing machine','other',500,.85,0],
+  ['TV 32 in','entertainment',60,.95,0],
+  ['TV 55 in','entertainment',120,.95,0],
+  ['Decoder','entertainment',30,.9,0],
+  ['Laptop','office',65,.9,0],
+  ['Desktop PC + monitor','office',250,.9,0],
+  ['Printer / copier','office',300,.9,0],
+  ['Borehole pump 0.75 kW','pumping',750,.8,0],
+  ['Borehole pump 2.2 kW (3-phase)','pumping',2200,.82,1],
+  ['Air compressor 3 kW (3-phase)','motor',3000,.82,1],
+  ['Cold room unit 5 kW (3-phase)','motor',5000,.85,1],
+  ['0.75 HP split AC','airConditioner',700,.85,0],
+  ['2.5 HP split AC','airConditioner',2200,.85,0],
+  ['3 HP split AC','airConditioner',2600,.85,0],
+  ['Floor-standing AC 5 HP (3-phase)','hvac',4500,.85,1],
+  ['Ducted or cassette AC 5 HP (3-phase)','hvac',4500,.85,1],
+  ['VRF outdoor unit 10 HP (3-phase)','hvac',8500,.9,1],
+  ['Air-cooled chiller 20 TR (3-phase)','hvac',22000,.88,1],
+  ['Air handling unit 5.5 kW (3-phase)','hvac',5500,.85,1],
+  ['Fan coil unit','hvac',150,.85,0],
+  ['Extractor fan','hvac',40,.8,0],
+  ['Ventilation fan 250 W','hvac',250,.8,0],
+  ['Evaporative air cooler','hvac',250,.8,0],
+  ['Air curtain','hvac',200,.8,0],
+  ['Dehumidifier','hvac',400,.85,0],
+  ['Pressure booster pump 0.55 kW','pumping',550,.8,0],
+  ['Pressure booster pump 1.1 kW','pumping',1100,.82,0],
+  ['Pressure booster set 3 kW (3-phase)','pumping',3000,.83,1],
+  ['Surface (jetting) pump 0.37 kW','pumping',370,.75,0],
+  ['Submersible pump 1.5 kW','pumping',1500,.8,0],
+  ['Submersible pump 3.7 kW (3-phase)','pumping',3700,.84,1],
+  ['Submersible pump 5.5 kW (3-phase)','pumping',5500,.85,1],
+  ['Sump or sewage pump 0.75 kW','pumping',750,.78,0],
+  ['Swimming pool pump 1.1 kW','pumping',1100,.8,0],
+  ['Jockey pump 1.5 kW (3-phase)','pumping',1500,.82,1],
+  ['Water treatment (RO) plant 1.5 kW','pumping',1500,.8,0],
+  ['Water dispenser (hot and cold)','waterHeating',600,.95,0],
+  ['Instant shower heater 5.5 kW','waterHeating',5500,1,0],
+  ['Tankless water heater 3.5 kW','waterHeating',3500,1,0],
+  ['Float switch with control relay','controls',10,.7,0],
+  ['Water-level controller with contactor','controls',25,.7,0],
+  ['Dedicated security bulb (dusk to dawn)','controls',20,.95,0],
+  ['Dedicated flood light LED 50 W','controls',50,.95,0],
+  ['Dedicated gate or perimeter light 100 W','controls',100,.95,0],
+  ['Gate motor (sliding)','controls',300,.75,0],
+  ['CCTV: DVR and 4 cameras','controls',80,.9,0],
+  ['Wi-Fi router or modem','controls',15,.8,0],
+  ['Electric fence energiser','controls',20,.8,0],
+  ['Fluorescent tube 36 W','lighting',40,.9,0],
+  ['LED downlight','lighting',7,.95,0],
+  ['Electric cooker, 4 burners and oven','cooking',7500,1,0],
+  ['Hot plate','cooking',1500,1,0],
+  ['Rice cooker','cooking',700,1,0],
+  ['Blender','cooking',400,.8,0],
+  ['Toaster','cooking',800,1,0],
+  ['Industrial oven 6 kW (3-phase)','cooking',6000,1,1],
+  ['Chest freezer (commercial)','refrigeration',400,.8,0],
+  ['Display fridge','refrigeration',350,.8,0],
+  ['Ice maker','refrigeration',700,.8,0],
+  ['Server rack or network cabinet','office',1000,.95,0],
+  ['Inverter or UPS charging 3.5 kVA','office',2000,.9,0],
+  ['Large photocopier','office',1500,.9,0],
+  ['Sound system or PA','entertainment',300,.9,0],
+  ['Projector','entertainment',300,.95,0],
+  ['Passenger lift 11 kW (3-phase)','motor',11000,.85,1],
+  ['Welding machine 5 kW (3-phase)','motor',5000,.7,1],
+  ['Lathe or milling machine 3 kW (3-phase)','motor',3000,.82,1],
+  ['Bench grinder or drill','motor',750,.75,0],
+  ['Dough mixer 1.5 kW','motor',1500,.8,0],
+  ['Industrial sewing machine','motor',550,.8,0],
+  ['Hair dryer','other',1800,1,0],
+  ['EV charger 7 kW','other',7000,.99,0],
+];
+
+/* ---------- meter catalogue ---------- */
+const METERS = [
+  [1,5,60,'Single-phase 5(60) A'],
+  [1,10,60,'Single-phase 10(60) A'],
+  [1,10,100,'Single-phase 10(100) A'],
+  [3,5,60,'Three-phase 3×5(60) A'],
+  [3,10,100,'Three-phase 3×10(100) A'],
+  [3,20,100,'Three-phase 3×20(100) A'],
+  [3,200,200,'Three-phase CT 200/5 A',1],
+  [3,400,400,'Three-phase CT 400/5 A',1],
+  [3,800,800,'Three-phase CT 800/5 A',1],
+].map(m => ({p:m[0], ib:m[1], imax:m[2], label:m[3], ct:!!m[4]}));
+
+const BRK = [6,10,16,20,25,32,40,50,63,80,100,125,160,200,250,315,400,500,630];
+
+/* ---------- defaults ---------- */
+const DEF = () => ({
+  kw:12,
+  amp:60,
+  load:.8,
+  margin:1.25,
+  imb:15,
+  md:45,   // 45 kVA — NERC MD customer threshold
+  div: Object.fromEntries(Object.entries(CAT).map(([k,v]) => [k,v[1]])),
+});
+
+/* ---------- app state ---------- */
+let S = {disco:'AEDC', prem:'R', band:'A', ref:'', items:[], cfg:DEF()};
+let uid = 1;
+
+try {
+  const s = JSON.parse(localStorage.getItem('hyman-electro') || 'null');
+  if (s && s.cfg && s.items) {
+    S = s;
+    S.cfg.div = {...DEF().div, ...S.cfg.div};
+    uid = 1 + Math.max(0, ...S.items.map(i => i.id));
+  }
+} catch(e) {}
+
+function save() {
+  try { localStorage.setItem('hyman-electro', JSON.stringify(S)); } catch(e) {}
+}
+
+/* ============================================================
+   ENGINE
+   ============================================================ */
+function assess() {
+  const c = S.cfg;
+  const S3 = Math.sqrt(3);
+
+  const A = S.items.filter(a => a.q > 0 && a.w > 0).map(a => {
+    const pf = Math.min(1, Math.max(.3, a.pf || 1));
+    const d  = Math.min(1, Math.max(.1, c.div[a.cat] ?? .7));
+    const cw = a.w * a.q;
+    const dw = cw * d;
+    const va = dw / pf;
+    const i  = a.tp ? dw / (S3 * 400 * pf) : dw / (230 * pf);
+    return {...a, pf, d, cw, dw, va, i};
+  });
+
+  if (!A.length) return null;
+
+  const sum = (l,k) => l.reduce((s,x) => s + x[k], 0);
+  const sp = A.filter(a => !a.tp);
+  const tp = A.filter(a => a.tp);
+
+  const dW = sum(A,'dw');
+  const dVA = sum(A,'va');
+  const iSP = sum(sp,'i');
+  const iTP = sum(tp,'i');
+
+  /* balance single-phase loads across three phases */
+  const ph = [iTP, iTP, iTP];
+  const asg = [];
+  [...sp].sort((a,b) => b.i - a.i).forEach(a => {
+    let t = 0;
+    for (let p = 1; p < 3; p++) if (ph[p] < ph[t]) t = p;
+    ph[t] += a.i;
+    asg.push([a.name, a.i, t]);
+  });
+
+  const mx = Math.max(...ph);
+  const mn = Math.min(...ph);
+  const mean = (ph[0] + ph[1] + ph[2]) / 3;
+  const imb = mean > 0 ? (mx - mn) / mean * 100 : 0;
+
+  /* decision */
+  const codes = [];
+  if (tp.length)           codes.push('THREE_PHASE_EQUIPMENT');
+  if (dW > c.kw * 1000)    codes.push('DEMAND_OVER_12KW');
+  if (iSP > c.amp)         codes.push('CURRENT_OVER_60A');
+  if (!codes.length)       codes.push('WITHIN_SINGLE_PHASE_LIMIT');
+
+  const three = codes.some(k => k !== 'WITHIN_SINGLE_PHASE_LIMIT');
+
+  const why = [];
+  if (codes.includes('THREE_PHASE_EQUIPMENT'))
+    why.push(`Three-phase equipment detected (${tp.map(a => esc(a.name)).join(', ')}). A single-phase meter cannot supply it.`);
+  if (codes.includes('DEMAND_OVER_12KW'))
+    why.push(`Assessed demand of ${f2(dW/1000)} kW is above the ${c.kw} kW single-phase limit.`);
+  if (codes.includes('CURRENT_OVER_60A'))
+    why.push(`Single-phase demand current of ${f1(iSP)} A is above the ${c.amp} A limit for a direct-connected single-phase meter.`);
+  if (codes.includes('WITHIN_SINGLE_PHASE_LIMIT'))
+    why.push(`Assessed demand of ${f2(dW/1000)} kW and ${f1(iSP)} A is within the single-phase limit.`);
+
+  /* meter + breaker */
+  const req = (three ? mx : iSP) / c.load;
+  const pool = METERS.filter(m => m.p == (three ? 3 : 1))
+    .sort((a,b) => a.imax - b.imax || b.ib - a.ib);
+  const meter = pool.find(m => m.imax >= req) || pool[pool.length - 1];
+
+  const des = three ? mx : iSP;
+  const brk = BRK.find(b => b >= des * c.margin) || BRK[BRK.length - 1];
+
+  /* warnings */
+  const w = [];
+  if (meter.imax < req)
+    w.push(`Required meter rating (${f1(req)} A) is above the largest catalogue meter. Refer to engineering for a dedicated CT panel.`);
+  if (meter.ct)
+    w.push('CT-operated metering is required. Schedule a CT and metering survey.');
+  if (three && imb > c.imb)
+    w.push(`Phase imbalance is ${f1(imb)} % (target below ${c.imb} %). Redistribute circuits across L1, L2 and L3 at the distribution board.`);
+  if (dVA > 0 && dW/dVA < .8)
+    w.push('Overall power factor is below 0.80. Consider power-factor correction for the motor loads.');
+
+  const md = dVA / 1000 > c.md || meter.ct;
+  if (md)
+    w.push(`Demand of ${f1(dVA/1000)} kVA may put this connection in a Maximum Demand class. Confirm the MD threshold with the DisCo.`);
+
+  return {
+    A, dW, dVA,
+    cW: sum(A,'cw'),
+    iSP, iTP,
+    ph, mx, mn, imb, asg,
+    three, why, codes,
+    meter, req, brk,
+    w, md,
+    pf: dVA ? dW / dVA : 1,
+  };
+}
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+function render() {
+  const d = DISCOS.find(x => x[0] == S.disco);
+  const code = CODES[S.prem];
+  const r = assess();
+
+  $('dinfo').innerHTML = `<b>${esc(d[1])}</b> (${d[0]})<br>Covers: ${esc(d[2])}.`;
+
+  let h = `<h2>3. Assessment</h2>`;
+
+  if (!r) {
+    $('out').innerHTML = h + '<p class="note">Add at least one appliance to see the recommendation. You can also load the example flat to see how it works.</p>';
+    return;
+  }
+
+  const cls = `${r.md ? code[1] : code[0]} (${S.band}-${r.md ? 'MD1' : 'Non-MD'}, ${BANDS[S.band]})`;
+
+  h += `
+    <div class="hero">
+      <div class="badge ${r.three ? 'b3' : 'b1'}">${r.three ? 'Three-phase supply' : 'Single-phase supply'}</div>
+      <div><b>${esc(r.meter.label)}</b><br><span class="note">Main breaker ${r.brk} A</span></div>
+    </div>
+    <ul>${r.why.map(x => `<li>${x}</li>`).join('')}</ul>
+    <div class="codes">${r.codes.map(k => `<span class="code">${k}</span>`).join('')}</div>
+    <div class="stats">
+      <div class="st"><b>${f2(r.cW/1000)} kW</b><span>Connected load</span></div>
+      <div class="st"><b>${f2(r.dW/1000)} kW</b><span>Demand after diversity</span></div>
+      <div class="st"><b>${f1(r.dVA/1000)} kVA</b><span>Apparent demand</span></div>
+      <div class="st"><b>${f2(r.pf)}</b><span>Overall power factor</span></div>
+      <div class="st"><b>${f1(r.three ? r.mx : r.iSP)} A</b><span>${r.three ? 'Busiest phase' : 'Design current at 230 V'}</span></div>
+      <div class="st"><b>${f1(r.req)} A</b><span>Required meter Imax</span></div>
+    </div>
+    <p><b>Suggested tariff class:</b> ${cls}. Ask ${esc(d[0])} to confirm your class and band.</p>
+  `;
+
+  /* phase map */
+  const top = Math.max(...r.ph, 1);
+  const col = ['var(--r)','var(--y)','var(--b)'];
+  h += `<h2>${r.three ? 'Phase map' : 'Phase map if three-phase is installed'}</h2>`;
+  h += r.ph.map((v,i) =>
+    `<div class="bar"><em>L${i+1}</em><div style="width:${Math.max(1, v/top*70)}%;background:${col[i]}"></div><span>${f1(v)} A</span></div>`
+  ).join('');
+  h += `<p class="note">Imbalance ${f1(r.imb)} %. `;
+  if (r.asg.length) {
+    h += 'Wire as: ' + [0,1,2].map(p =>
+      `L${p+1}: ${r.asg.filter(a => a[2] === p).map(a => esc(a[0])).join(', ') || 'three-phase loads only'}`
+    ).join(' | ');
+  }
+  h += `</p>`;
+
+  if (r.w.length)
+    h += `<h2>Warnings</h2><ul class="warn">${r.w.map(x => `<li>${x}</li>`).join('')}</ul>`;
+
+  h += `
+    <p class="note">Reference: ${esc(S.ref || 'not set')} | ${d[0]} | engine v${VER} | ${new Date().toLocaleString('en-NG')}</p>
+    <p class="np">
+      <button class="p" onclick="try{window.print()}catch(e){}">Print or save as PDF</button>
+      <button onclick="logIt()">Save to audit log</button>
+      <button onclick="showReq()">Show API request</button>
+    </p>
+  `;
+
+  /* appliance breakdown */
+  h += `<h2>Appliance breakdown</h2><div class="tw"><table>
+    <tr><th>Appliance</th><th>Qty</th><th>W each</th><th>Diversity</th><th>Demand W</th><th>Amps</th><th>Supply</th><th class="np"></th></tr>`;
+  h += S.items.map(a => {
+    const x = r.A.find(y => y.id == a.id);
+    return `<tr>
+      <td>${esc(a.name)}</td>
+      <td><input type="number" min="0" value="${a.q}" aria-label="Quantity of ${esc(a.name)}" onchange="setQ(${a.id},this.value)"></td>
+      <td>${a.w}</td>
+      <td>${x ? x.d : '-'}</td>
+      <td>${x ? f1(x.dw) : '-'}</td>
+      <td>${x ? f1(x.i) : '-'}</td>
+      <td>${a.tp ? '3-ph 400 V' : '1-ph 230 V'}</td>
+      <td class="np"><button onclick="del(${a.id})" aria-label="Remove ${esc(a.name)}">Remove</button></td>
+    </tr>`;
+  }).join('');
+  h += `</table></div>`;
+
+  $('out').innerHTML = h;
+}
+
+/* ============================================================
+   ACTIONS
+   ============================================================ */
+function go() { save(); render(); }
+
+function add(n, c, w, q, pf, tp) {
+  S.items.push({id:uid++, name:n, cat:c, w:+w, q:+q, pf:+pf, tp:+tp});
+  go();
+}
+
+function addPre() {
+  const p = PRE[$('pre').value];
+  if (!p) return;
+  add(p[0], p[1], p[2], Math.max(1, $('pq').value), p[3], p[4]);
+}
+
+function addCustom() {
+  const n = $('cn').value.trim();
+  const w = +$('cw').value;
+  if (!n || !(w > 0)) { $('cn').focus(); return; }
+  add(n, $('cc').value, w, Math.max(1, $('cq').value), $('cp').value, $('ct').value);
+  $('cn').value = '';
+  $('cw').value = '';
+}
+
+function setQ(id, v) {
+  const a = S.items.find(x => x.id == id);
+  if (a) a.q = Math.max(0, +v || 0);
+  go();
+}
+
+function del(id) {
+  S.items = S.items.filter(x => x.id != id);
+  go();
+}
+
+function demo() {
+  S.items = [];
+  const seed = [
+    ['LED bulb',16],['Ceiling fan',3],['1.5 HP split AC',2],
+    ['Refrigerator (medium)',1],['Deep freezer',1],['Microwave',1],
+    ['Pressing iron',1],['TV 55 in',1],['Decoder',1],
+    ['Laptop',2],['Washing machine',1],['Borehole pump 0.75 kW',1],
+  ];
+  seed.forEach(([n,q]) => {
+    const p = PRE.find(x => x[0] === n);
+    if (p) S.items.push({id:uid++, name:n, cat:p[1], w:p[2], q:q, pf:p[3], tp:p[4]});
+  });
+  go();
+}
+
+/* ============================================================
+   CONFIG UI
+   ============================================================ */
+function cfgUI() {
+  const c = S.cfg;
+  const f = [
+    ['kw','Single-phase limit (kW)'],
+    ['amp','Single-phase limit (A)'],
+    ['load','Meter loading limit (0–1)'],
+    ['margin','Breaker margin'],
+    ['imb','Imbalance warning (%)'],
+    ['md','MD review threshold (kVA)'],
+  ];
+  let h = f.map(([k,l]) =>
+    `<div><label for="c_${k}">${l}</label>
+     <input id="c_${k}" type="number" step="any" value="${c[k]}"
+            onchange="setCfg('${k}', this.value)"></div>`
+  ).join('');
+  h += Object.entries(CAT).map(([k,v]) =>
+    `<div><label for="d_${k}">Diversity: ${v[0]}</label>
+     <input id="d_${k}" type="number" step=".05" min=".1" max="1" value="${c.div[k]}"
+            onchange="setDiv('${k}', this.value, ${v[1]})"></div>`
+  ).join('');
+  $('cfg').innerHTML = h;
+}
+
+function setCfg(k, v) {
+  const n = +v;
+  if (Number.isFinite(n)) S.cfg[k] = n;
+  go();
+}
+
+function setDiv(k, v, fallback) {
+  const n = +v;
+  S.cfg.div[k] = (Number.isFinite(n) && n > 0) ? n : fallback;
+  go();
+}
+
+/* ============================================================
+   PRESETS SEARCH
+   ============================================================ */
+function fillPre() {
+  const q = ($('psearch').value || '').toLowerCase();
+  const prev = $('pre').value;
+
+  let html = '';
+  Object.entries(CAT).forEach(([k,v]) => {
+    const opts = PRE.map((p,i) => {
+      if (p[1] !== k) return '';
+      const label = p[0] + ', ' + p[2] + ' W';
+      const suffix = p[4] && !/3-phase/.test(p[0]) ? ' (3-phase)' : '';
+      if (q && !p[0].toLowerCase().includes(q) && !v[0].toLowerCase().includes(q)) return '';
+      return `<option value="${i}">${label}${suffix}</option>`;
+    }).join('');
+    if (opts) html += `<optgroup label="${v[0]}">${opts}</optgroup>`;
+  });
+
+  $('pre').innerHTML = html || '<option value="">No match</option>';
+
+  /* preserve selection */
+  if ($('pre').querySelector(`option[value="${prev}"]`)) $('pre').value = prev;
+}
+
+/* ============================================================
+   API REQUEST + AUDIT LOG
+   ============================================================ */
+function body() {
+  const c = S.cfg;
+  return {
+    customerRef: S.ref || null,
+    disco: S.disco,
+    premises: S.prem,
+    band: S.band,
+    appliances: S.items.filter(a => a.q > 0).map(a => ({
+      id: 'a' + a.id,
+      name: a.name,
+      category: a.cat,
+      watts: a.w,
+      quantity: a.q,
+      powerFactor: a.pf,
+      isThreePhase: !!a.tp,
+    })),
+    options: {
+      designMargin: c.margin,
+      meterLoadingLimit: c.load,
+    },
+  };
+}
+
+function showReq() {
+  $('req').value = JSON.stringify(body(), null, 2);
+  $('reqd').open = true;
+}
+
+let AUD = [];
+try { AUD = JSON.parse(localStorage.getItem('hyman-audit') || '[]'); } catch(e) {}
+
+function logIt() {
+  const r = assess();
+  if (!r) return;
+  const c = S.cfg;
+  AUD.unshift({
+    id: 'HE-' + Date.now().toString(36).toUpperCase(),
+    ts: new Date().toISOString(),
+    engineVersion: VER,
+    reasonCodes: r.codes,
+    phase: r.three ? 'three' : 'single',
+    demandKW: Math.round(r.dW/10)/100,
+    meter: r.meter.label,
+    breakerA: r.brk,
+    config: JSON.parse(JSON.stringify(c)),
+    request: body(),
+  });
+  AUD = AUD.slice(0, 200);
+  try { localStorage.setItem('hyman-audit', JSON.stringify(AUD)); } catch(e) {}
+  renderAudit();
+}
+
+function clearAud() {
+  AUD = [];
+  try { localStorage.removeItem('hyman-audit'); } catch(e) {}
+  renderAudit();
+}
+
+function renderAudit() {
+  $('alist').innerHTML = AUD.length
+    ? `<table>
+        <tr><th>ID</th><th>Time</th><th>Reference</th><th>DisCo</th><th>Phase</th><th>Demand</th><th>Meter</th><th>Reason codes</th></tr>
+        ${AUD.map(e => `<tr>
+          <td>${esc(e.id)}</td>
+          <td>${new Date(e.ts).toLocaleString('en-NG')}</td>
+          <td>${esc(e.request.customerRef || '-')}</td>
+          <td>${esc(e.request.disco)}</td>
+          <td>${e.phase}</td>
+          <td>${e.demandKW} kW</td>
+          <td>${esc(e.meter)}</td>
+          <td>${(e.reasonCodes||[]).join(', ')}</td>
+        </tr>`).join('')}
+       </table>
+       <p><button onclick="clearAud()">Clear log</button></p>`
+    : '<p class="note">No saved assessments yet. Run an assessment, then choose "Save to audit log".</p>';
+}
+
+/* ============================================================
+   BOOT
+   ============================================================ */
+$('disco').innerHTML = DISCOS.map(d => `<option value="${d[0]}">${d[1]} (${d[0]})</option>`).join('');
+$('band').innerHTML = Object.entries(BANDS).map(([k,v]) => `<option value="${k}">Band ${k}: ${v}</option>`).join('');
+fillPre();
+$('cc').innerHTML = Object.entries(CAT).map(([k,v]) => `<option value="${k}">${v[0]}</option>`).join('');
+
+['disco','prem','band'].forEach(k => {
+  $(k).value = S[k];
+  $(k).onchange = () => { S[k] = $(k).value; go(); };
+});
+
+$('ref').value = S.ref;
+$('ref').oninput = () => { S.ref = $('ref').value; save(); };
+$('ref').onchange = render;
+
+cfgUI();
+render();
+renderAudit();
+</script>
+</body>
+</html>
